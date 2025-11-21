@@ -77,7 +77,7 @@ The API will be available at:
 
 ### Authentication
 
-#### Get Available Users
+#### Get Available Users (from external API)
 
 ```http
 GET /api/auth
@@ -97,7 +97,7 @@ This will return the JWT for the chosen user
 
 ### Cart Management
 
-#### Get All Products
+#### Get All Products (from external API)
 
 ```http
 GET /api/cart/products
@@ -131,6 +131,13 @@ DELETE /api/cart
 Authorization: Bearer <token>
 ```
 
+## Authentication Flow
+
+1. Request available users from `/api/auth`
+2. Login with a user ID via `/api/auth/login`
+3. Use the returned JWT token for authenticated requests
+4. Include token in Authorization header: `Bearer <token>`
+
 ## Database
 
 The application uses SQLite with Entity Framework Core. The database schema includes:
@@ -146,8 +153,6 @@ The application integrates with the following external API:
 
 ## Testing
 
-A Postman collection is included in [`ShoppingCart.postman_collection.json`](ShoppingCart.postman_collection.json) for testing all endpoints.
-
 ## Swagger UI
 
 1. Access the interactive API documentation at after running the app:
@@ -160,6 +165,8 @@ A Postman collection is included in [`ShoppingCart.postman_collection.json`](Sho
 4. Test the endpoints
 
 ### Using Postman
+
+A Postman collection is included in [`ShoppingCart.postman_collection.json`](ShoppingCart.postman_collection.json) for testing all endpoints.
 
 1. Import the collection into Postman
 2. Set the `login_token` collection variable after logging in
@@ -178,14 +185,3 @@ dotnet run --environment Development
 ```bash
 dotnet build --configuration Release
 ```
-
-## Authentication Flow
-
-1. Request available users from `/api/auth`
-2. Login with a user ID via `/api/auth/login`
-3. Use the returned JWT token for authenticated requests
-4. Include token in Authorization header: `Bearer <token>`
-
-## License
-
-This project is licensed under the MIT License.
