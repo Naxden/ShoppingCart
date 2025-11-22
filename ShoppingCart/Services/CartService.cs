@@ -12,9 +12,13 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
 
         var cart = new CartDto() { UserId = userId };
 
-        foreach (var entry in entries)   
+        var productTasks = entries.Select(entry =>
+            productApiClient.GetProductByIdAsync(entry.ProductId, ct));
+        var products = await Task.WhenAll(productTasks);
+
+        for (int i = 0; i < entries.Count; i++)
         {
-            var product = await productApiClient.GetProductByIdAsync(entry.ProductId, ct);
+            var product = products[i];
             if (product == null) continue;
 
             cart.Items.Add(new CartItemDto
@@ -22,11 +26,11 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
                 ProductId = product.Id,
                 Title = product.Title,
                 UnitPrice = product.Price,
-                Quantity = entry.Quantity,
+                Quantity = entries[i].Quantity,
                 ImageUrl = product.Images.FirstOrDefault()
             });
         }
-        
+
         return cart;
     }
 
@@ -56,9 +60,9 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
         if (entry == null) throw new KeyNotFoundException("Product not found in cart");
 
         entry.Quantity -= quantity;
-        
+
         if (entry.Quantity <= 0)
-            context.CartEntries.Remove(entry);    
+            context.CartEntries.Remove(entry);
 
         await context.SaveChangesAsync(ct);
     }
@@ -66,9 +70,9 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
     public async Task ClearCartAsync(int userId, CancellationToken ct = default)
     {
         var entries = await context.CartEntries.Where(c => c.UserId == userId).ToListAsync(ct);
-        
+
         context.CartEntries.RemoveRange(entries);
-        
+
         await context.SaveChangesAsync(ct);
     }
 }
