@@ -39,7 +39,6 @@ ShoppingCart/
 ### Prerequisites
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download)
-- [Entity Framework Core .NET 9.0 CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
 
 ### Installation
 
@@ -56,10 +55,10 @@ cd ShoppingCart
 dotnet restore
 ```
 
-3. Apply database migrations:
+3. Build the application:
 
 ```bash
-dotnet ef database update
+dotnet restore
 ```
 
 4. Run the application:
@@ -77,7 +76,7 @@ The API will be available at:
 
 ### Authentication
 
-#### Get Available Users (from external API)
+#### Get Available Users (proxy to external API)
 
 ```http
 GET /api/auth
@@ -97,7 +96,7 @@ This will return the JWT for the chosen user
 
 ### Cart Management
 
-#### Get All Products (from external API)
+#### Get All Products (proxy to external API)
 
 ```http
 GET /api/cart/products
@@ -153,7 +152,7 @@ The application integrates with the following external API:
 
 ## Testing
 
-## Swagger UI
+### Swagger UI
 
 1. Access the interactive API documentation at after running the app:
 
