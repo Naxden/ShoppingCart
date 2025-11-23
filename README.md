@@ -58,13 +58,13 @@ dotnet restore
 3. Build the application:
 
 ```bash
-dotnet restore
+dotnet build
 ```
 
 4. Run the application:
 
 ```bash
-dotnet run --project ShoppingCart
+dotnet run
 ```
 
 The API will be available at:
