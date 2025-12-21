@@ -9,6 +9,7 @@ using ShoppingCart.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddCors();
 
 builder.Services.AddEndpointsApiExplorer();
 // Swagger
@@ -79,7 +80,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register Cart Service
 builder.Services.AddScoped<ICartService, CartService>();
 
+var clientAppOrigins = builder.Configuration["ClientAppUrl"]?
+    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+var corsOrigins = clientAppOrigins is { Length: > 0 } ? clientAppOrigins : ["http://localhost:3000"];
+
 var app = builder.Build();
+
+app.UseCors(policy =>
+    policy
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .WithOrigins(corsOrigins));
 
 app.UseSwagger();
 app.UseSwaggerUI();
