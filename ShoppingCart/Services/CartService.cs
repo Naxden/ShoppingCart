@@ -54,6 +54,21 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
         await context.SaveChangesAsync(ct);
     }
 
+    public async Task UpdateItemAsync(int userId, int productId, int quantity, CancellationToken ct = default)
+    {
+        var entry = context.CartEntries.FirstOrDefault(e => e.UserId == userId && e.ProductId == productId);
+        if (entry == null) throw new KeyNotFoundException("Product not found in cart");
+
+        if (entry.Quantity != quantity)
+        {
+            entry.Quantity = quantity;
+            if (quantity <= 0)
+                context.CartEntries.Remove(entry);
+            
+            await context.SaveChangesAsync(ct);
+        }
+    }
+
     public async Task RemoveItemAsync(int userId, int productId, int quantity = 1, CancellationToken ct = default)
     {
         var entry = await context.CartEntries.FirstOrDefaultAsync(e => e.UserId == userId && e.ProductId == productId, ct);

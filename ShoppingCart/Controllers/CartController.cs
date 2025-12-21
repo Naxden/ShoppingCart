@@ -44,6 +44,26 @@ public class CartController(ICartService cart, IProductApiClient productApiClien
     }
 
     [Authorize]
+    [HttpPut("{productId:int}")]
+    public async Task<IActionResult> Update(int productId, [FromQuery] int quantity)
+    {
+        try
+        {
+            var id = GetUserId();
+            await cart.UpdateItemAsync(id, productId, quantity);
+            return Ok();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [Authorize]
     [HttpDelete("{productId:int}")]
     public async Task<IActionResult> Remove(int productId, [FromQuery] int quantity = 1)
     {
