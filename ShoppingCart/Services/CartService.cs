@@ -10,7 +10,7 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
     {
         var entries = await context.CartEntries.Where(c => c.UserId == userId).ToListAsync(ct);
 
-        var cart = new CartDto() { UserId = userId };
+        var cart = new CartDto();
 
         var productTasks = entries.Select(entry =>
             productApiClient.GetProductByIdAsync(entry.ProductId, ct));
