@@ -1,97 +1,119 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Product } from '../types/Product'
-import { addProductToCart } from '../lib/api'
-import { getToken, isLoggedIn } from '../lib/auth'
+import { Product } from "@/app/types/Product";
+import { useState } from "react";
+import { cartStore } from "@/app/stores/cartStore";
 
-type Props = {
-  product: Product
-  className?: string
-}
+const ProductCard = (props: Product) => {
+  const { id, title, price, description, images } = props;
+  const [mainIndex, setMainIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
 
-const formatPrice = (value: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+  const hasMultiple = images.length > 1;
+  const prev = () => {
+    if (!hasMultiple) return;
+    setMainIndex((i) => (i - 1 + images.length) % images.length);
+  };
+  const next = () => {
+    if (!hasMultiple) return;
+    setMainIndex((i) => (i + 1) % images.length);
+  };
 
-export default function ProductCard({ product, className }: Props) {
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
-  const image = product.images && product.images.length > 0 ? product.images[0] : undefined
-  const shortDescription =
-    product.description && product.description.length > 120
-      ? `${product.description.slice(0, 120).trim()}…`
-      : product.description
-
-  async function handleAddToCart() {
-    if (!isLoggedIn()) {
-      router.push('/login')
-      return
-    }
-
-    const token = getToken()
-    if (!token) return
-
-    setLoading(true)
-    try {
-      await addProductToCart(product.id, 1, token)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleAddToCart = () => {
+    cartStore.addProduct(props);
+  };
 
   return (
-    <div
-      className={`product-card ${className ?? ''}`}
-      style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: 8,
-        padding: 12,
-        maxWidth: 320,
-        background: '#fff',
-      }}
-    >
-      <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 6, marginBottom: 8 }}>
-        {image ? (
-          <img src={image} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', background: '#f3f4f6' }}>
-            No image
+    <div className="border p-4">
+      <h2 className="text-lg font-bold mb-2">{title}</h2>
+
+      {images.length > 0 ? (
+        <div className="mb-4 relative">
+          <div className="mb-2">
+            <img
+              src={images[mainIndex]}
+              alt={`${title} ${mainIndex + 1}`}
+              className="w-full h-48 object-cover rounded"
+            />
           </div>
-        )}
-      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.2 }}>{product.title}</h3>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <small style={{ color: '#6b7280' }}>{product.category?.name}</small>
-          <strong style={{ fontSize: 16 }}>{formatPrice(product.price)}</strong>
+          {hasMultiple && (
+            <>
+              <button
+                onClick={prev}
+                aria-label="Previous image"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-10 h-10 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+
+              <button
+                onClick={next}
+                aria-label="Next image"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-10 h-10 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
+      ) : (
+        <div className="mb-4 text-sm text-gray-500">No images available</div>
+      )}
 
-        {shortDescription ? (
-          <p style={{ margin: '8px 0 0 0', color: '#374151', fontSize: 13 }}>{shortDescription}</p>
-        ) : null}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-          <small style={{ color: '#9ca3af' }}>{new Date(product.creationAt).toLocaleDateString()}</small>
+      <p className="text-gray-700 mb-2">
+        {expanded
+          ? description
+          : `${description.slice(0, 100)}${description.length > 100 ? "..." : ""}`}
+        {description.length > 100 && (
           <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={loading}
-            style={{
-              background: loading ? '#9ca3af' : '#3b82f6',
-              color: '#fff',
-              border: 'none',
-              padding: '6px 10px',
-              borderRadius: 6,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
+            onClick={() => setExpanded(!expanded)}
+            className="text-blue-500 ml-2"
           >
-            {loading ? 'Adding...' : 'Add'}
+            {expanded ? "Show less" : "Read more"}
           </button>
-        </div>
+        )}
+      </p>
+
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-blue-600 font-semibold">${price.toFixed(2)}</p>
+
+        <button
+          onClick={handleAddToCart}
+          aria-label={`Add ${title} to cart`}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
+        >
+          Add to cart
+        </button>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default ProductCard;

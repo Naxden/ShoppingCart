@@ -1,165 +1,109 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { CartItem } from '../types/Cart'
-import { addProductToCart, removeProductFromCart, setProductQuantity } from '../lib/api'
-import { getToken } from '../lib/auth'
+import { observer } from "mobx-react";
+import { CartItem } from "@/app/types/Cart";
+import { cartStore } from "@/app/stores/cartStore";
+import { useState } from "react";
 
-type Props = {
-  item: CartItem
-  onUpdate?: () => void
-}
+const CartItemCard = observer((props: { cartItem: CartItem }) => {
+  const { cartItem } = props;
+  const [quantity, setQuantity] = useState(cartItem.quantity.toString());
 
-export default function CartItemCard({ item, onUpdate }: Props) {
-  const [inputValue, setInputValue] = useState<string>(String(item.quantity))
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setInputValue(String(item.quantity))
-  }, [item.quantity])
-
-  async function handleDecrease() {
-    const token = getToken()
-    if (!token) return
-
-    setLoading(true)
-    try {
-      await removeProductFromCart(item.productId, 1, token)
-      onUpdate?.()
-    } finally {
-      setLoading(false)
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "" || /^\d+$/.test(value)) {
+      setQuantity(value);
     }
-  }
+  };
 
-  async function handleIncrease() {
-    const token = getToken()
-    if (!token) return
+  const handleQuantityBlur = () => {
+    const num = parseInt(quantity) || 0;
+    cartStore.updateItem(cartItem, num);
+    setQuantity(num.toString());
+  };
 
-    setLoading(true)
-    try {
-      await addProductToCart(item.productId, 1, token)
-      onUpdate?.()
-    } finally {
-      setLoading(false)
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleQuantityBlur();
     }
-  }
+  };
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/[^\d]/g, '')
-    setInputValue(raw)
-  }
+  const handleIncrement = () => {
+    const newQty = cartItem.quantity + 1;
+    cartStore.addItem(cartItem);
+    setQuantity(newQty.toString());
+  };
 
-  async function handleBlur() {
-    const n = parseInt(inputValue || '', 10)
-    if (Number.isNaN(n) || n < 1) {
-      setInputValue(String(item.quantity))
-      return
-    }
+  const handleDecrement = () => {
+    const newQty = Math.max(0, cartItem.quantity - 1);
+    cartStore.removeItem(cartItem);
+    setQuantity(newQty.toString());
+  };
 
-    const token = getToken()
-    if (!token) return
-
-    const newQty = Math.max(1, Math.floor(n))
-    setInputValue(String(newQty))
-
-    if (newQty === item.quantity) return
-
-    setLoading(true)
-    try {
-      await setProductQuantity(item.productId, newQty, token)
-      onUpdate?.()
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleRemove() {
-    const token = getToken()
-    if (!token) return
-
-    setLoading(true)
-    try {
-      await removeProductFromCart(item.productId, item.quantity, token)
-      onUpdate?.()
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleRemove = () => {
+    cartStore.updateItem(cartItem, 0);
+  };
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: 12,
-      alignItems: 'center',
-      padding: 12,
-      border: '1px solid #e5e7eb',
-      borderRadius: 8,
-      marginBottom: 12
-    }}>
-      <img src={item.imageUrl} alt={item.title} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 6 }} />
-
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.title}</div>
-        <div style={{ color: '#6b7280', fontSize: 14 }}>
-          Unit price: ${item.unitPrice.toFixed(2)}
+    <div className="border p-4 mb-4 rounded flex gap-4">
+      <img
+        src={cartItem.imageUrl}
+        alt={cartItem.title}
+        className="w-24 h-24 object-cover rounded"
+      />
+      <div className="flex-1">
+        <h3 className="font-semibold text-lg">{cartItem.title}</h3>
+        <p className="text-gray-600">
+          Unit Price: ${cartItem.unitPrice.toFixed(2)}
+        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={handleDecrement}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            -
+          </button>
+          <input
+            type="text"
+            value={quantity}
+            onChange={handleQuantityChange}
+            onBlur={handleQuantityBlur}
+            onKeyDown={handleKeyPress}
+            className="w-16 text-center border rounded px-2 py-1"
+          />
+          <button
+            onClick={handleIncrement}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            +
+          </button>
+          <span className="ml-2">Quantity: {cartItem.quantity}</span>
         </div>
+        <p className="font-semibold mt-2">
+          Total: ${cartItem.totalPrice.toFixed(2)}
+        </p>
       </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button
-          aria-label="Decrease quantity"
-          onClick={handleDecrease}
-          disabled={loading || item.quantity <= 1}
-          style={{ width: 32, height: 32 }}
-        >
-          -
-        </button>
-
-        <input
-          aria-label="Quantity"
-          type="text"
-          inputMode="numeric"
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur}
-          disabled={loading}
-          style={{
-            width: 56,
-            textAlign: 'center',
-            padding: '6px 8px',
-            borderRadius: 4,
-            border: '1px solid #d1d5db'
-          }}
-        />
-
-        <button
-          aria-label="Increase quantity"
-          onClick={handleIncrease}
-          disabled={loading}
-          style={{ width: 32, height: 32 }}
-        >
-          +
-        </button>
-      </div>
-
-      <div style={{ minWidth: 100, textAlign: 'right', fontWeight: 600, fontSize: 16 }}>
-        ${item.totalPrice.toFixed(2)}
-      </div>
-
       <button
         onClick={handleRemove}
-        disabled={loading}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: '#ef4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: 6,
-          cursor: loading ? 'not-allowed' : 'pointer'
-        }}
+        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 self-start"
+        title="Remove from cart"
       >
-        Remove
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
       </button>
     </div>
-  )
-}
+  );
+});
+
+export default CartItemCard;
