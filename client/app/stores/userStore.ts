@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable } from 'mobx';
 
 class UserStore {
   isLoggedIn: boolean = false;
@@ -9,26 +9,26 @@ class UserStore {
   }
 
   login(token: string) {
-    this.isLoggedIn = true;
     this.token = token;
+    this.isLoggedIn = true;
 
-    localStorage.setItem("token", token);
+    localStorage.setItem('token', token);
   }
 
   logout() {
     this.isLoggedIn = false;
     this.token = null;
 
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
   }
 
   init() {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token) {
-      this.isLoggedIn = true;
       this.token = token;
+      this.isLoggedIn = true;
     }
   }
 }

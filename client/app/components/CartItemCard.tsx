@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { observer } from "mobx-react";
-import { CartItem } from "@/app/types/Cart";
-import { cartStore } from "@/app/stores/cartStore";
-import { useState } from "react";
+import { observer } from 'mobx-react';
+import { CartItem } from '@/app/types/Cart';
+import { cartStore } from '@/app/stores/cartStore';
+import { useState } from 'react';
 
 const CartItemCard = observer((props: { cartItem: CartItem }) => {
   const { cartItem } = props;
@@ -11,7 +11,7 @@ const CartItemCard = observer((props: { cartItem: CartItem }) => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === "" || /^\d+$/.test(value)) {
+    if (value === '' || /^\d+$/.test(value)) {
       setQuantity(value);
     }
   };
@@ -23,7 +23,7 @@ const CartItemCard = observer((props: { cartItem: CartItem }) => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleQuantityBlur();
     }
   };
@@ -45,21 +45,22 @@ const CartItemCard = observer((props: { cartItem: CartItem }) => {
   };
 
   return (
-    <div className="border p-4 mb-4 rounded flex gap-4">
+    <div className="relative flex gap-6 p-6 bg-gray-200 rounded-xl max-w-3xl my-10">
+      {/*Image*/}
       <img
+        className="rounded-2xl object-cover flex w-1/3"
         src={cartItem.imageUrl}
-        alt={cartItem.title}
-        className="w-24 h-24 object-cover rounded"
+        alt={`${cartItem.title} image`}
       />
-      <div className="flex-1">
-        <h3 className="font-semibold text-lg">{cartItem.title}</h3>
-        <p className="text-gray-600">
-          Unit Price: ${cartItem.unitPrice.toFixed(2)}
-        </p>
-        <div className="flex items-center gap-2 mt-2">
+      <div className="flex flex-col justify-between w-2/3">
+        {/*Title*/}
+        <h2 className="text-black text-2xl font-bold">Product Title</h2>
+
+        {/*Quantity Controls*/}
+        <div className="flex items-center gap-3 bg-gray-400 p-2 rounded-lg mx-auto">
           <button
             onClick={handleDecrement}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            className="m-2 px-3 text-xl py-1 bg-gray-200 text-gray-500 rounded hover:bg-gray-300"
           >
             -
           </button>
@@ -69,23 +70,31 @@ const CartItemCard = observer((props: { cartItem: CartItem }) => {
             onChange={handleQuantityChange}
             onBlur={handleQuantityBlur}
             onKeyDown={handleKeyPress}
-            className="w-16 text-center border rounded px-2 py-1"
+            className="w-16 text-center bg-gray-300 text-gray-700 font-semibold rounded px-2 py-1"
           />
           <button
             onClick={handleIncrement}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            className="m-2 px-3 text-xl py-1 bg-gray-200 text-gray-500 rounded hover:bg-gray-300"
           >
             +
           </button>
-          <span className="ml-2">Quantity: {cartItem.quantity}</span>
         </div>
-        <p className="font-semibold mt-2">
-          Total: ${cartItem.totalPrice.toFixed(2)}
+
+        {/*Unit Price*/}
+        <p className="text-black italic text-center">
+          Unit price: ${cartItem.unitPrice.toFixed(2)}
+        </p>
+
+        {/*Total Price*/}
+        <p className="text-black text-xl font-bold">
+          Total Price: ${cartItem.totalPrice.toFixed(2)}
         </p>
       </div>
+
+      {/*Remove item button*/}
       <button
         onClick={handleRemove}
-        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 self-start"
+        className="absolute top-4 right-4 px-3 py-3 bg-red-500 text-white rounded hover:bg-red-600 self-start"
         title="Remove from cart"
       >
         <svg

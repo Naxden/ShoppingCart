@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { observer } from "mobx-react";
-import { cartStore } from "@/app/stores/cartStore";
-import { userStore } from "@/app/stores/userStore";
-import CartItemCard from "@/app/components/CartItemCard";
+import { observer } from 'mobx-react'
+import { cartStore } from '@/app/stores/cartStore'
+import { userStore } from '@/app/stores/userStore'
+import CartItemCard from '@/app/components/CartItemCard'
 
 const CartPage = observer(() => {
-  const isLoggedIn = userStore.isLoggedIn;
-  const items = cartStore.items;
-  const totalPrice = cartStore.totalPrice;
+  const isLoggedIn = userStore.isLoggedIn
+  const items = cartStore.items
+  const totalPrice = cartStore.totalPrice
 
   return (
     <div>
@@ -22,7 +22,10 @@ const CartPage = observer(() => {
           {items.map((item) => (
             <CartItemCard cartItem={item} key={item.productId} />
           ))}
-          <h2>Total Price: ${totalPrice.toFixed(2)}</h2>
+          <div className="h-px bg-gray-400 my-4 w-full"></div>
+          <h2 className="font-semibold">
+            Total Price: ${totalPrice.toFixed(2)}
+          </h2>
           <button
             className="bg-red-600 text-white px-4 py-2 rounded mt-4 hover:bg-red-800"
             onClick={cartStore.clearCart}
@@ -32,7 +35,7 @@ const CartPage = observer(() => {
         </div>
       )}
     </div>
-  );
-});
+  )
+})
 
-export default CartPage;
+export default CartPage

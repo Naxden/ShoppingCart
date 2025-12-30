@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { makeAutoObservable, runInAction } from "mobx";
-import { CartItem } from "@/app/types/Cart";
-import { Product } from "@/app/types/Product";
-import { userStore } from "@/app/stores/userStore";
-import * as api from "@/app/lib/api";
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
+import { CartItem } from '@/app/types/Cart';
+import { Product } from '@/app/types/Product';
+import { userStore } from '@/app/stores/userStore';
+import * as api from '@/app/lib/api';
 
 class CartStore {
   items: CartItem[] = [];
@@ -12,22 +12,37 @@ class CartStore {
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
+
+    reaction(
+      () => userStore.isLoggedIn,
+      (isLoggedIn: boolean) => {
+        if (isLoggedIn) {
+          this.fetchCart();
+        } else {
+          this.clearLocalCart();
+        }
+      }
+    );
   }
 
   get token() {
     return userStore.token;
   }
 
-  clearCart() {
+  clearLocalCart() {
     this.items = [];
     this.totalPrice = 0;
+  }
+
+  clearCart() {
+    this.clearLocalCart();
 
     if (this.token) api.clearCart(this.token);
   }
 
   addProduct(product: Product) {
     const existingItem = this.items.find(
-      (item) => item.productId === product.id,
+      (item) => item.productId === product.id
     );
     if (existingItem) {
       existingItem.quantity += 1;
@@ -68,7 +83,7 @@ class CartStore {
   }
 
   updateItem(item: CartItem, quantity: number) {
-    const exist = this.items.find((item) => item.productId === item.productId);
+    const exist = this.items.find((ci) => ci.productId === item.productId);
     if (!exist) return;
 
     if (quantity > 0) {
@@ -87,7 +102,7 @@ class CartStore {
   }
 
   removeItem(item: CartItem) {
-    const exist = this.items.find((item) => item.productId === item.productId);
+    const exist = this.items.find((ci) => ci.productId === item.productId);
     if (!exist) return;
 
     if (exist.quantity === 1) {
@@ -101,20 +116,23 @@ class CartStore {
         .then(() => this.fetchCart());
   }
 
-  async fetchCart() {
+  fetchCart() {
     const token = userStore.token;
     if (!token) return;
 
-    try {
-      const cart = await api.getCart(token);
-      if (!cart) return;
-      runInAction(() => {
-        this.items = cart.items ?? [];
-        this.totalPrice = cart.totalPrice ?? 0;
+    console.log('Fetching cart', token);
+    api
+      .getCart(token)
+      .then((cart) => {
+        if (!cart) return;
+        runInAction(() => {
+          this.items = cart.items ?? [];
+          this.totalPrice = cart.totalPrice ?? 0;
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to fetch cart:', error);
       });
-    } catch (err) {
-      console.error("Failed to fetch cart:", err);
-    }
   }
 }
 
