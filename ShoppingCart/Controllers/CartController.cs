@@ -13,6 +13,7 @@ public class CartController(ICartService cart, IProductApiClient productApiClien
 
     [AllowAnonymous]
     [HttpGet("products")]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetAllProducts()
     {
         var response = await productApiClient.GetProductsAsync(CancellationToken.None);
