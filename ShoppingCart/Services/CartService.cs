@@ -1,22 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using ShoppingCart.DTOs;
+using ShoppingCart.Extensions;
 using ShoppingCart.Models;
 
 namespace ShoppingCart.Services;
 
-public class CartService(AppDbContext context, IProductApiClient productApiClient) : ICartService
+public class CartService(AppDbContext context, IProductApiClient productApiClient, IDistributedCache cache) : ICartService
 {
     public async Task<CartDto> GetCartAsync(int userId, CancellationToken ct = default)
     {
         var entries = await context.CartEntries.Where(c => c.UserId == userId).ToListAsync(ct);
 
         var cart = new CartDto();
-
+        
         var productTasks = entries.Select(entry =>
-            productApiClient.GetProductByIdAsync(entry.ProductId, ct));
+            GetOrAddProductAsync(entry.ProductId, ct));
         var products = await Task.WhenAll(productTasks);
 
-        for (int i = 0; i < entries.Count; i++)
+        for (var i = 0; i < entries.Count; i++)
         {
             var product = products[i];
             if (product == null) continue;
@@ -36,8 +38,9 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
 
     public async Task AddItemAsync(int userId, int productId, int quantity = 1, CancellationToken ct = default)
     {
-        var product = await productApiClient.GetProductByIdAsync(productId, ct);
-        if (product == null) throw new KeyNotFoundException("Product not found");
+        var product = await GetOrAddProductAsync(productId, ct);
+        if (product == null) 
+            throw new KeyNotFoundException("Product not found");
 
         var entry = await context.CartEntries
             .FirstOrDefaultAsync(e => e.UserId == userId && e.ProductId == productId, ct);
@@ -89,5 +92,22 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
         context.CartEntries.RemoveRange(entries);
 
         await context.SaveChangesAsync(ct);
+    }
+
+    private async Task<ProductDto?> GetOrAddProductAsync(int productId, CancellationToken ct = default)
+    {
+        var productCache = await cache.GetItemAsync<ProductDto>($"product:{productId}", ct);
+        var product = productCache;
+        
+        if (productCache == null)
+        {
+            product = await productApiClient.GetProductByIdAsync(productId, ct);
+            if (product != null)
+            {
+                await cache.SetItemAsync<ProductDto>($"product:{productId}", product, ct: ct);    
+            }
+        }
+        
+        return product;
     }
 }

@@ -57,6 +57,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = builder.Configuration["ShopCart_"];
+});
+
 // Register JwtService
 builder.Services.AddSingleton<IJwtService, JwtService>();
 
