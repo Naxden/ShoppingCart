@@ -120,7 +120,6 @@ class CartStore {
     const token = userStore.token;
     if (!token) return;
 
-    console.log('Fetching cart', token);
     api
       .getCart(token)
       .then((cart) => {
