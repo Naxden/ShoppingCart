@@ -4,8 +4,13 @@ import { observer } from 'mobx-react'
 import { cartStore } from '@/app/stores/cartStore'
 import { userStore } from '@/app/stores/userStore'
 import CartItemCard from '@/app/components/CartItemCard'
+import { useEffect } from 'react';
 
 const CartPage = observer(() => {
+  useEffect(() => {
+    cartStore.fetchCart();
+  }, []);
+
   const isLoggedIn = userStore.isLoggedIn
   const items = cartStore.items
   const totalPrice = cartStore.totalPrice

@@ -54,7 +54,7 @@ const CartItemCard = observer((props: { cartItem: CartItem }) => {
       />
       <div className="flex flex-col justify-between w-2/3">
         {/*Title*/}
-        <h2 className="text-black text-2xl font-bold">Product Title</h2>
+        <h2 className="text-black text-2xl font-bold">{cartItem.title}</h2>
 
         {/*Quantity Controls*/}
         <div className="flex items-center gap-3 bg-gray-400 p-2 rounded-lg mx-auto">
