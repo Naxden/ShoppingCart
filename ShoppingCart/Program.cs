@@ -11,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddCors();
 
+builder.Services.Configure<RefreshTokenServiceOptions>(
+    builder.Configuration.GetSection(nameof(RefreshTokenServiceOptions)));
+
 builder.Services.AddEndpointsApiExplorer();
 // Swagger
 builder.Services.AddSwaggerGen(options =>
@@ -31,10 +34,10 @@ builder.Services.AddSwaggerGen(options =>
             new OpenApiSecurityScheme
             {
                 Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = JwtBearerDefaults.AuthenticationScheme
-                    }
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = JwtBearerDefaults.AuthenticationScheme
+                }
             },
             Array.Empty<string>()
         }
@@ -83,8 +86,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-// Register Cart Service
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 var clientAppOrigins = builder.Configuration["ClientAppUrl"]?
     .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -97,6 +100,7 @@ app.UseCors(policy =>
     policy
         .AllowAnyHeader()
         .AllowAnyMethod()
+        .AllowCredentials()
         .WithOrigins(corsOrigins));
 
 app.UseSwagger();

@@ -14,7 +14,7 @@ public class JwtService : IJwtService
     public JwtService(IConfiguration config)
     {
         _secret = config["Jwt:Secret"] ?? "very_secret_key_for_shopcart_api_123";
-        _expiresMinutes = int.TryParse(config["Jwt:ExpiresMinutes"], out var m) ? m : 60;
+        _expiresMinutes = int.TryParse(config["Jwt:ExpirationInMinutes"], out var m) ? m : 5;
     }
 
     public string GenerateToken(UserDto user)

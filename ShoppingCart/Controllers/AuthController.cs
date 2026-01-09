@@ -5,8 +5,8 @@ using ShoppingCart.Services;
 namespace ShoppingCart.Controllers;
 
 [ApiController]
-[Route("api/auth")]
-public class AuthController(IUserApiClient userClient, IJwtService jwt) : ControllerBase
+[Route("api/")]
+public class AuthController(IUserApiClient userClient, IJwtService jwt, IRefreshTokenService refreshTokenService) : ControllerBase
 {
     public sealed record LoginRequest
     {
@@ -14,7 +14,7 @@ public class AuthController(IUserApiClient userClient, IJwtService jwt) : Contro
     }
 
     [AllowAnonymous]
-    [HttpGet]
+    [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
         var usersDtos = await userClient.GetUsersAsync(CancellationToken.None);
@@ -31,7 +31,52 @@ public class AuthController(IUserApiClient userClient, IJwtService jwt) : Contro
 
         if (user == null)
             return Unauthorized("User not found");
-
+        
+        var refreshToken = await refreshTokenService.SaveRefreshTokenAsync(user, CancellationToken.None);
+        
+        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions()
+        {
+            HttpOnly = true,
+            Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenService.ExpirationInDays)
+        });
+        
         return Ok(jwt.GenerateToken(user));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+            return Unauthorized();
+
+        try
+        {
+            var rotateToken = await refreshTokenService.RotateRefreshTokenAsync(refreshToken, CancellationToken.None);
+            Response.Cookies.Append("refreshToken", rotateToken.RefreshToken, new CookieOptions()
+            {
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenService.ExpirationInDays)
+            });
+
+            return Ok(rotateToken.AccessToken);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        {
+            await refreshTokenService.RemoveRefreshTokenAsync(refreshToken, CancellationToken.None);
+            Response.Cookies.Delete("refreshToken");
+        }
+        
+        return NoContent();
     }
 }

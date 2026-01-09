@@ -104,7 +104,7 @@ public class CartService(AppDbContext context, IProductApiClient productApiClien
             product = await productApiClient.GetProductByIdAsync(productId, ct);
             if (product != null)
             {
-                await cache.SetItemAsync<ProductDto>($"product:{productId}", product, ct: ct);    
+                await cache.SetItemAsync($"product:{productId}", product, ct: ct);    
             }
         }
         
