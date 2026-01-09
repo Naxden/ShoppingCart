@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { observer } from 'mobx-react'
-import { cartStore } from '@/app/stores/cartStore'
-import { userStore } from '@/app/stores/userStore'
-import CartItemCard from '@/app/components/CartItemCard'
+import { observer } from 'mobx-react';
+import { cartStore } from '@/app/stores/cartStore';
+import { userStore } from '@/app/stores/userStore';
+import CartItemCard from '@/app/components/CartItemCard';
 import { useEffect } from 'react';
 
 const CartPage = observer(() => {
@@ -11,9 +11,9 @@ const CartPage = observer(() => {
     cartStore.fetchCart();
   }, []);
 
-  const isLoggedIn = userStore.isLoggedIn
-  const items = cartStore.items
-  const totalPrice = cartStore.totalPrice
+  const isLoggedIn = userStore.isLoggedIn;
+  const items = cartStore.items;
+  const totalPrice = cartStore.totalPrice;
 
   return (
     <div>
@@ -40,7 +40,7 @@ const CartPage = observer(() => {
         </div>
       )}
     </div>
-  )
-})
+  );
+});
 
-export default CartPage
+export default CartPage;

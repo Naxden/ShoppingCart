@@ -1,34 +1,53 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
+import { LogoutReason } from '@/app/types/LogoutReason';
+import { logout } from '@/app/lib/api';
+import { refresh } from '@/app/lib/api';
+import { ApiError } from '@/app/errors/ApiError';
+import IsDevelopment from '@/app/lib/consts';
 
 class UserStore {
   isLoggedIn: boolean = false;
-  token: string | null = null;
+  accessToken: string | null = null;
+  logoutReason: LogoutReason | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  login(token: string) {
-    this.token = token;
+  login(accessToken: string) {
+    this.accessToken = accessToken;
     this.isLoggedIn = true;
-
-    localStorage.setItem('token', token);
+    this.logoutReason = null;
   }
 
-  logout() {
+  logout(reason: LogoutReason = LogoutReason.USER) {
     this.isLoggedIn = false;
-    this.token = null;
+    this.accessToken = null;
+    this.logoutReason = reason;
 
-    localStorage.removeItem('token');
+    logout().catch((err) => {
+      if (IsDevelopment()) {
+        console.error(err);
+      }
+    });
   }
 
-  init() {
+  async init() {
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.token = token;
-      this.isLoggedIn = true;
+    try {
+      const accessToken = await refresh();
+      if (accessToken) {
+        runInAction(() => {
+          this.accessToken = accessToken;
+          this.isLoggedIn = true;
+          this.logoutReason = null;
+        });
+      }
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.statusCode !== 401) {
+        if (IsDevelopment()) console.error(err.message);
+      }
     }
   }
 }

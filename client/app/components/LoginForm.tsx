@@ -15,8 +15,8 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const token = await login(userId);
-      userStore.login(token);
+      const accessToken = await login(userId);
+      userStore.login(accessToken);
     } catch (error) {
       console.error("Login failed:", error);
     } finally {

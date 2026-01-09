@@ -1,10 +1,11 @@
 'use client';
 
 import { makeAutoObservable, reaction, runInAction } from 'mobx';
-import { CartItem } from '@/app/types/Cart';
+import { Cart, CartItem } from '@/app/types/Cart';
 import { Product } from '@/app/types/Product';
 import { userStore } from '@/app/stores/userStore';
 import * as api from '@/app/lib/api';
+import { apiMediator } from '@/app/lib/apiMediator';
 
 class CartStore {
   items: CartItem[] = [];
@@ -25,10 +26,6 @@ class CartStore {
     );
   }
 
-  get token() {
-    return userStore.token;
-  }
-
   clearLocalCart() {
     this.items = [];
     this.totalPrice = 0;
@@ -37,7 +34,8 @@ class CartStore {
   clearCart() {
     this.clearLocalCart();
 
-    if (this.token) api.clearCart(this.token);
+    apiMediator
+      .handleApiCall<void>((token) => api.clearCart(token));
   }
 
   addProduct(product: Product) {
@@ -59,10 +57,9 @@ class CartStore {
     }
     this.totalPrice += product.price;
 
-    if (this.token)
-      api
-        .addProductToCart(product.id, 1, this.token)
-        .then(() => this.fetchCart());
+    apiMediator
+      .handleApiCall<void>((token) => api.addProductToCart(product.id, 1, token))
+      .then(() => this.fetchCart());
   }
 
   addItem(item: CartItem) {
@@ -76,10 +73,11 @@ class CartStore {
 
     this.totalPrice += item.unitPrice;
 
-    if (this.token)
-      api
-        .addProductToCart(item.productId, 1, this.token)
-        .then(() => this.fetchCart());
+    apiMediator
+      .handleApiCall<void>((token) =>
+        api.addProductToCart(item.productId, 1, token)
+      )
+      .then(() => this.fetchCart());
   }
 
   updateItem(item: CartItem, quantity: number) {
@@ -95,10 +93,11 @@ class CartStore {
       this.items = this.items.filter((i) => i.productId !== item.productId);
     }
 
-    if (this.token)
-      api
-        .setProductQuantity(item.productId, quantity, this.token)
-        .then(() => this.fetchCart());
+    apiMediator
+      .handleApiCall<void>((token) =>
+        api.setProductQuantity(item.productId, quantity, token)
+      )
+      .then(() => this.fetchCart());
   }
 
   removeItem(item: CartItem) {
@@ -110,18 +109,20 @@ class CartStore {
     }
     this.totalPrice -= exist.quantity;
 
-    if (this.token)
-      api
-        .removeProductFromCart(item.productId, 1, this.token)
-        .then(() => this.fetchCart());
+    apiMediator
+      .handleApiCall<void>((token) =>
+        api.removeProductFromCart(item.productId, 1, token)
+      )
+      .then(() => this.fetchCart());
   }
 
   fetchCart() {
-    const token = userStore.token;
+    const token = userStore.accessToken;
     if (!token) return;
 
-    api
-      .getCart(token)
+
+    apiMediator
+      .handleApiCall<Cart>((token) => api.getCart(token))
       .then((cart) => {
         if (!cart) return;
         runInAction(() => {
