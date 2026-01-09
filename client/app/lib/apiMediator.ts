@@ -19,7 +19,6 @@ class ApiMediator {
   ): Promise<T | null> {
     const token = userStore.accessToken;
     if (!token) {
-      // TODO: check if valid userStore.logout();
       return null;
     }
 
